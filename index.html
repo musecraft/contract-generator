@@ -4,8 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Генерация договора</title>
+
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -51,7 +53,6 @@
   </style>
 </head>
 <body>
-
   <h2>Генерация договора PDF</h2>
 
   <div class="field">
@@ -89,21 +90,20 @@
   <button onclick="generate()">Создать PDF</button>
 
   <div class="hint">
-    Если текст попадает не туда, меняй координаты <b>x</b> и <b>y</b> в блоке
-    <code>FIELD_POSITIONS</code>.
+    Если текст попадает не туда, меняй значения x и y в объекте FIELD_POSITIONS.
   </div>
 
   <div id="error" class="error"></div>
 
   <script>
     const FIELD_POSITIONS = {
-      name:      { x: 120, y: 690, size: 12 },
-      passport:  { x: 120, y: 660, size: 12 },
-      address:   { x: 120, y: 630, size: 12 },
-      phone:     { x: 120, y: 600, size: 12 },
-      email:     { x: 120, y: 570, size: 12 },
-      total:     { x: 400, y: 690, size: 12 },
-      date:      { x: 400, y: 660, size: 12 }
+      name:     { x: 120, y: 690, size: 12 },
+      passport: { x: 120, y: 660, size: 12 },
+      address:  { x: 120, y: 630, size: 12 },
+      phone:    { x: 120, y: 600, size: 12 },
+      email:    { x: 120, y: 570, size: 12 },
+      total:    { x: 400, y: 690, size: 12 },
+      date:     { x: 400, y: 660, size: 12 }
     };
 
     async function generate() {
@@ -124,62 +124,14 @@
         const total = document.getElementById('total').value.trim();
         const date = document.getElementById('date').value.trim();
 
-  drawField(page, font, passport, FIELD_POSITIONS.passport, pageHeight);
-        drawField(page, font, address, FIELD_POSITIONS.address, pageHeight);
-        drawField(page, font, phone, FIELD_POSITIONS.phone, pageHeight);
-        drawField(page, font, email, FIELD_POSITIONS.email, pageHeight);
-        drawField(page, font, total, FIELD_POSITIONS.total, pageHeight);
-        drawField(page, font, date, FIELD_POSITIONS.date, pageHeight);
+        const inputPdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(inputPdfBytes);
 
-        const pdfBytesOutput = await pdfDoc.save();
-
-        const blob = new Blob([pdfBytesOutput], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = buildFileName(name, date);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      } catch (error) {
-        console.error(error);
-        errorBox.textContent = 'Ошибка: ' + error.message;
-      }
-    }
-
-    function drawField(page, font, text, config, pageHeight) {
-      if (!text) return;
-
-      page.drawText(text, {
-        x: config.x,
-        y: toPdfY(config.y, pageHeight),
-        size: config.size || 12,
-        font: font
-      });
-    }
-
-    function toPdfY(topOffset, pageHeight) {
-      return pageHeight - topOffset;
-    }
-
-    function buildFileName(name, date) {
-      const safeName = (name || 'contract').replace(/[\\/:*?"<>|]/g, '_');
-      const safeDate = (date || '').replace(/[\\/:*?"<>|]/g, '_');
-      return safeDate
-        ? Договор - ${safeName} - ${safeDate}.pdf
-        : Договор - ${safeName}.pdf;
-    }
-  </script>
-
-</body>
-</html>
+        pdfDoc.registerFontkit(fontkit);
 
         const fontResponse = await fetch('Carlito-Regular.ttf');
         if (!fontResponse.ok) {
-          throw new Error('Не найден файл шрифта Carlito-Regular.ttf');
+          throw new Error('Не найден файл Carlito-Regular.ttf');
         }
 
         const fontBytes = await fontResponse.arrayBuffer();
@@ -201,9 +153,9 @@
         drawField(page, font, total, FIELD_POSITIONS.total, pageHeight);
         drawField(page, font, date, FIELD_POSITIONS.date, pageHeight);
 
-        const pdfBytesOutput = await pdfDoc.save();
+        const outputPdfBytes = await pdfDoc.save();
 
-        const blob = new Blob([pdfBytesOutput], { type: 'application/pdf' });
+        const blob = new Blob([outputPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement('a');
@@ -225,24 +177,22 @@
 
       page.drawText(text, {
         x: config.x,
-        y: toPdfY(config.y, pageHeight),
+        y: pageHeight - config.y,
         size: config.size || 12,
         font: font
       });
     }
 
-    function toPdfY(topOffset, pageHeight) {
-      return pageHeight - topOffset;
-    }
-
     function buildFileName(name, date) {
       const safeName = (name || 'contract').replace(/[\\/:*?"<>|]/g, '_');
       const safeDate = (date || '').replace(/[\\/:*?"<>|]/g, '_');
-      return safeDate
-        ? Договор - ${safeName} - ${safeDate}.pdf
-        : Договор - ${safeName}.pdf;
+
+      if (safeDate) {
+        return 'Договор - ' + safeName + ' - ' + safeDate + '.pdf';
+      }
+
+      return 'Договор - ' + safeName + '.pdf';
     }
   </script>
-
 </body>
 </html>
