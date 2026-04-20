@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Генерация договора</title>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+
+<h2>Генерация договора</h2>
+
+<input id="file" type="file" accept="application/pdf"><br><br>
+
+<input id="name" placeholder="ФИО"><br><br>
+<input id="total" placeholder="Сумма"><br><br>
+<input id="date" placeholder="Дата"><br><br>
+
+<button onclick="generate()">Создать PDF</button>
+
+<script>
+async function generate() {
+  const file = document.getElementById('file').files[0];
+  if (!file) {
+    alert('Загрузи PDF шаблон');
+    return;
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+  const page = pdfDoc.getPages()[0];
+  const { width, height } = page.getSize();
+
+  const name = document.getElementById('name').value;
+  const total = document.getElementById('total').value;
+  const date = document.getElementById('date').value;
+
+  // 👉 ВСТАВКА ТЕКСТА (настрой координаты под свой договор)
+
+  page.drawText(name, {
+    x: 120,
+    y: height - 150,
+    size: 12
+  });
+
+  page.drawText(total, {
+    x: 400,
+    y: height - 200,
+    size: 12
+  });
+
+  page.drawText(date, {
+    x: 400,
+    y: height - 250,
+    size: 12
+  });
+
+  // 👉 Скачивание PDF
+
+  const pdfBytes = await pdfDoc.save();
+
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'contract.pdf';
+  link.click();
+}
+</script>
+
+</body>
+</html>
